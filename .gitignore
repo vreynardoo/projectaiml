@@ -1,0 +1,12 @@
+# Folder Python virtual environment
+yolov8env/
+venv/
+env/
+
+# Folder cache Python
+__pycache__/
+*.pyc
+
+# Folder spesifik IDE
+.vscode/
+.idea/
