@@ -1,0 +1,66 @@
+[
+  {
+    "nama": "Telur Dadar Sayur",
+    "bahan": ["egg", "carrot", "broccoli"],
+    "langkah": [
+      "Kocok telur hingga merata.",
+      "Cincang halus wortel dan brokoli, lalu masukkan ke dalam kocokan telur.",
+      "Tambahkan garam dan merica secukupnya.",
+      "Panaskan minyak dan goreng hingga matang kedua sisinya."
+    ]
+  },
+  {
+    "nama": "Salad Buah Sederhana",
+    "bahan": ["apple", "orange", "banana"],
+    "langkah": [
+      "Kupas dan potong semua buah sesuai selera.",
+      "Campurkan dalam sebuah mangkuk.",
+      "Tambahkan sedikit perasan jeruk nipis agar tidak berubah warna.",
+      "Sajikan dingin."
+    ]
+  },
+  {
+    "nama": "Spaghetti Saus Tomat",
+    "bahan": ["pasta", "tomato", "onion", "garlic", "bell pepper"],
+    "langkah": [
+      "Rebus pasta hingga matang sesuai petunjuk kemasan.",
+      "Tumis bawang bombay dan bawang putih hingga harum.",
+      "Masukkan paprika dan tomat yang sudah dihaluskan, masak hingga mengental.",
+      "Bumbui dengan garam, merica, dan sedikit gula.",
+      "Sajikan pasta dengan saus tomat di atasnya."
+    ]
+  },
+  {
+    "nama": "Terong Balado",
+    "bahan": ["eggplant", "onion", "garlic", "chilli pepper"],
+    "langkah": [
+      "Potong terong dan goreng hingga setengah matang, sisihkan.",
+      "Haluskan cabai, bawang, dan bawang putih.",
+      "Tumis bumbu yang sudah dihaluskan hingga matang dan harum.",
+      "Masukkan terong yang sudah digoreng, aduk rata.",
+      "Tambahkan garam dan gula, masak sebentar hingga bumbu meresap."
+    ]
+  },
+  {
+    "nama": "Tumis Zukini (Courgette)",
+    "bahan": ["courgette", "onion", "garlic"],
+    "langkah": [
+      "Iris tipis zukini dan bawang bombay.",
+      "Cincang halus bawang putih.",
+      "Panaskan sedikit minyak, tumis bawang hingga harum.",
+      "Masukkan zukini, masak hingga sedikit layu.",
+      "Bumbui dengan garam dan merica, sajikan hangat."
+    ]
+  },
+  {
+    "nama": "Saus Krim Susu untuk Pasta",
+    "bahan": ["pasta", "milk", "cheese", "garlic"],
+    "langkah": [
+      "Lelehkan sedikit mentega di wajan.",
+      "Tumis bawang putih cincang hingga harum.",
+      "Tuang susu perlahan sambil terus diaduk.",
+      "Masukkan keju parut, aduk hingga saus mengental.",
+      "Sajikan dengan pasta yang sudah direbus."
+    ]
+  }
+]

@@ -1,12 +1,38 @@
-# Folder Python virtual environment
-yolov8env/
-venv/
-env/
+# Folder Virtual Environment Python
+# Jangan pernah mengunggah folder ini karena spesifik untuk setiap mesin
+# dan bisa dibuat ulang dari requirements.txt
+/venv/
+/yolov8env/
+/env/
 
-# Folder cache Python
+# Folder cache dan file terkompilasi Python
+# Dibuat secara otomatis oleh Python, tidak perlu disimpan
 __pycache__/
 *.pyc
 
-# Folder spesifik IDE
+# Folder hasil training Ultralytics (SANGAT PENTING)
+# Folder ini berisi model, log, dan gambar yang ukurannya sangat besar
+/runs/
+
+# Folder Dataset (SANGAT PENTING)
+# Dataset gambar adalah file terbesar dalam proyek. Jangan pernah diunggah.
+# Beri instruksi di README.md tentang cara mendapatkan datasetnya.
+/AI Recipes Recommendation/
+/Combined Vegetables Fruits/
+/Egg-Detection-Dataset/
+/archive/
+
+# File Model AI (*.pt) (SANGAT PENTING)
+# File model, baik yang di-download atau hasil training, ukurannya besar.
+# Simpan di luar repo (misal: Google Drive) dan berikan link download.
+*.pt
+*.onnx
+
+# Folder spesifik IDE/Editor
+# Pengaturan personal untuk editor kode, tidak relevan untuk orang lain
 .vscode/
 .idea/
+
+# File spesifik sistem operasi
+.DS_Store
+Thumbs.db

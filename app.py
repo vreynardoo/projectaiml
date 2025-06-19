@@ -2,161 +2,132 @@ import streamlit as st
 from PIL import Image
 from ultralytics import YOLO
 import json
-import tempfile
-from collections import defaultdict
+import os
 
 # --------------------------------------
-# Load model YOLOv5 (Pindahkan ke atas!)
+# Konfigurasi Halaman Streamlit
 # --------------------------------------
-# model = YOLO("yolov5s.pt")  # Menggunakan model pre-trained dari Ultralytics
+st.set_page_config(page_title="FoodGenie 🍳", page_icon="🍲", layout="wide")
+st.title("🍲 FoodGenie: Rekomendasi Resep dari Foto")
 
-# @st.cache_resource akan menyimpan model di cache, sehingga tidak perlu di-load ulang setiap kali ada interaksi.
+# --- Fungsi-fungsi Helper ---
+
 @st.cache_resource
 def load_model():
-    """Memuat model YOLOv5 dari file."""
-    model = YOLO("yolov5s.pt")  # Menggunakan model pre-trained dari Ultralytics
-    return model
+    """
+    Memuat satu model AI utama.
+    """
+    # Ganti dengan path ke model terbaik Anda yang sudah dilatih
+    model_path = "model_bahan_lengkap.pt" 
 
-# @st.cache_data akan menyimpan data resep di cache.
+    if not os.path.exists(model_path):
+        st.error(f"Model utama '{model_path}' tidak ditemukan. Menggunakan model default.")
+        return YOLO("yolov8s.pt") # Fallback jika model utama tidak ada
+        
+    return YOLO(model_path)
+
 @st.cache_data
-
-# -------------------------
-# Load resep dari file JSON
-# -------------------------
 def load_recipes():
+    """Memuat data resep dari file JSON."""
     try:
-        with open("data/recipes.json", "r", encoding="utf-8") as f:
+        with open("recipes.json", "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        st.error("❌ File recipes.json tidak ditemukan di folder 'data/'!")
-        return []
-    except json.JSONDecodeError:
-        st.error("❌ Format file 'data/recipes.json' salah! Pastikan formatnya adalah JSON yang valid.")
+        st.error("❌ File 'recipes.json' tidak ditemukan!")
         return []
 
-# -------------------------------
-# Deteksi bahan makanan dari foto
-# -------------------------------
-def detect_ingredients(image, model):
-    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
-        image.save(tmp.name)
-        results = model(tmp.name)  # ← sekarang model sudah didefinisikan di atas
+def detect_ingredients(images, model):
+    """
+    Mendeteksi bahan dari BANYAK gambar menggunakan satu model.
+    """
+    all_detected_labels = set()
 
-        detected_labels=set()
+    for image in images:
+        results = model(image)
         for r in results:
             for c in r.boxes.cls:
                 label = model.names[int(c)]
-                detected_labels.add(label.lower())
-
-    return list(detected_labels)
-
-
-def find_best_recipes(detected_ingredients, all_recipes):
-    # """
-    # Mencari dan mengurutkan resep berdasarkan jumlah bahan yang cocok.
-    # Resep dengan kecocokan bahan terbanyak akan muncul di paling atas.
-    # """
-    if not detect_ingredients or not all_recipes:
-        return []
+                all_detected_labels.add(label.lower())
     
-    detected_set=set(detected_ingredients)
-    matched_recipes=[]
+    return list(all_detected_labels)
 
+def find_best_recipes(selected_ingredients, all_recipes):
+    """Mencari dan mengurutkan resep berdasarkan bahan yang cocok."""
+    if not selected_ingredients or not all_recipes: return []
+    detected_set = set(selected_ingredients)
+    matched_recipes = []
     for recipe in all_recipes:
-        recipe_ingredients_set=set(recipe['bahan'])
-        matching_count=len(detected_set.intersection(recipe_ingredients_set)) # Hitung berapa banyak bahan yang terdeteksi ada di dalam resep
-
+        recipe_ingredients_set = set(bahan.lower() for bahan in recipe['bahan'])
+        matching_count = len(detected_set.intersection(recipe_ingredients_set))
         if matching_count > 0:
-            can_make=recipe_ingredients_set.issubset(detected_set)
+            can_make = recipe_ingredients_set.issubset(detected_set)
             matched_recipes.append({
-                "nama": recipe['nama'],
-                "bahan": recipe['bahan'],
-                "langkah": recipe['langkah'],
-                "matching_count": matching_count,
-                "can_make": can_make #tandai apakah resep bisa langsung dibuat
+                "nama": recipe['nama'], "bahan": recipe['bahan'],
+                "langkah": recipe['langkah'], "matching_count": matching_count,
+                "can_make": can_make
             })
+    return sorted(matched_recipes, key=lambda x: (x['can_make'], x['matching_count']), reverse=True)
 
-    # urutkan resep:
-    # 1. Resep yang bisa dibuat (can_make = True) diutamakan.
-    # 2. Urutkan berdasarkan jumlah bahan yang cocok (descending).
+# --- Antarmuka (UI) Streamlit ---
 
-    return sorted(matched_recipes, key=lambda x:(c['can_make'], x['matching_count']), reverse=True) 
+model = load_model()
+all_recipes = load_recipes()
 
+st.header("1. Unggah Foto Bahan")
+uploaded_files = st.file_uploader(
+    "Pilih satu atau beberapa gambar bahan makanan...", 
+    type=["jpg", "jpeg", "png"],
+    accept_multiple_files=True
+)
 
-    
+if uploaded_files:
+    image_column, result_column = st.columns(2)
+    with image_column:
+        st.subheader("Gambar Terunggah")
+        for uploaded_file in uploaded_files:
+            st.image(Image.open(uploaded_file), caption=uploaded_file.name)
 
-# --------------------
-# Streamlit Web App UI
-# --------------------
-st.set_page_config(page_title="FoodGenie 🍳", page_icon="🍲", layout="wide")
-st.title("🍲 FoodGenie: Rekomendasi Resep dari Foto Bahan Makanan")
+    with result_column:
+        st.subheader("2. Hasil & Rekomendasi")
+        if all_recipes:
+            with st.spinner("🔍 Menganalisis gambar..."):
+                images_to_process = [Image.open(file) for file in uploaded_files]
+                # Memanggil fungsi deteksi yang telah disederhanakan
+                detected_ingredients = detect_ingredients(images_to_process, model)
+                
+                if detected_ingredients:
+                    st.info(f"**Bahan Terdeteksi:** {', '.join(d.capitalize() for d in detected_ingredients)}")
+                else:
+                    st.warning("**Tidak ada bahan yang dikenali.**")
 
-model=load_model()
-all_recipes=load_recipes()
+                # Logika dropdown tidak berubah dan akan bekerja dengan benar
+                recipe_ingredients = set()
+                for recipe in all_recipes:
+                    for ingredient in recipe['bahan']:
+                        recipe_ingredients.add(ingredient.lower())
 
-col1, col2=st.column(2)
-
-with col1:
-    st.header("1. Unggah Foto Bahan")
-    uploaded_file=st.file_uploader("Pilih gambar bahan makanan", type=["jpg", "jpeg", "png"])
-
-    if uploaded_file:
-        image=Image.open(uploaded_file)
-        st.image(image, caption="Gambar yang diunggah", use_column_width=True)
-
-with col2:
-    st.header("2. Hasil & Rekomendasi")
-    if uploaded_file and all_recipes:
-        with st.spinner("🔍 Menganalisis gambar dan mencari resep..."):
-            detected_ingredients=detect_ingredients(image, model) #deteksi bahan dari gambar
-            st.info(f"**Bahan Terdeteksi:** {', '.join(detected_ingredients) if detected_ingredients else 'Tidak ada bahan yang dikenali.'}")
-
-            selected_ingredients=st.multiselect(
-                "Koreksi bahan jika perlu (tambah/hapus):",
-                options=sorted(list(set(detected_ingredients + [bahan for resep in all_recipes for bahan in resep['bahan']]))),
-                defaul=detected_ingredients
-            )
-
-            if st.button("Cari Resep", use_container_width=True) and selected_ingredients:
-                recommended_recipes=find_best_recipes(selected_ingredients, all_recipes)
-
-                st.subheader()
-
-
-
-
-# uploaded_file = st.file_uploader("📸 Upload foto bahan makanan kamu", type=["jpg", "jpeg", "png"])
-
-# if uploaded_file:
-#     # Tampilkan gambar
-#     image = Image.open(uploaded_file)
-#     st.image(image, caption="Gambar bahan makanan yang diunggah", use_column_width=True)
-
-#     with st.spinner("🔍 Mendeteksi bahan makanan..."):
-#         # Deteksi bahan
-#         ingredients = detect_ingredients(image)
-#         st.success(f"✅ Bahan terdeteksi: {', '.join(ingredients) if ingredients else 'Tidak ada bahan terdeteksi.'}")
-
-#         # Load resep
-#         all_recipes = load_recipes()
-
-#         if ingredients:
-#             st.header("📖 Rekomendasi Resep:")
-#             shown = set()
-#             for ingredient in ingredients:
-#                 if ingredient in all_recipes:
-#                     for resep in all_recipes[ingredient]:
-#                         if resep["nama"] not in shown:
-#                             shown.add(resep["nama"])
-#                             st.subheader(f"🍽️ {resep['nama']}")
-#                             st.markdown("**Bahan:**")
-#                             st.write(", ".join(resep["bahan"]))
-#                             st.markdown("**Langkah-langkah:**")
-#                             for i, langkah in enumerate(resep["langkah"], 1):
-#                                 st.write(f"{i}. {langkah}")
-#                 else:
-#                     st.info(f"ℹ️ Tidak ada resep ditemukan untuk bahan: {ingredient}")
-#         else:
-#             st.warning("⚠️ Tidak ada bahan yang dikenali dari gambar.")
-# else:
-#     st.info("📤 Silakan upload foto bahan makanan untuk mulai.")
+                all_possible_ingredients = sorted(list(set(detected_ingredients) | recipe_ingredients))
+                
+                selected_ingredients = st.multiselect(
+                    "Koreksi bahan jika perlu (tambah/hapus):",
+                    options=all_possible_ingredients,
+                    default=detected_ingredients
+                )
+                
+                if st.button("Cari Resep Sekarang!", type="primary", use_container_width=True) and selected_ingredients:
+                    recommended_recipes = find_best_recipes(selected_ingredients, all_recipes)
+                    st.subheader("📖 Rekomendasi Resep")
+                    if not recommended_recipes:
+                        st.warning("Tidak ada resep yang cocok dengan bahan yang Anda pilih.")
+                    else:
+                        for recipe in recommended_recipes:
+                            if recipe['can_make']: status = "✅ Bisa Langsung Dibuat"
+                            else: status = f"⚠️ Butuh Bahan Lain ({recipe['matching_count']}/{len(recipe['bahan'])} Cocok)"
+                            with st.expander(f"{recipe['nama']} - {status}"):
+                                st.markdown("**Bahan-bahan:**")
+                                bahan_dimiliki = set(selected_ingredients)
+                                for bahan in recipe['bahan']:
+                                    if bahan.lower() in bahan_dimiliki: st.markdown(f"- {bahan.capitalize()} (✔️ Ada)")
+                                    else: st.markdown(f"- <span style='color: red;'>{bahan.capitalize()} (❌ Tidak Ada)</span>", unsafe_allow_html=True)
+                                st.markdown("\n**Langkah-langkah:**")
+                                for i, step in enumerate(recipe['langkah'], 1): st.write(f"{i}. {step}")
