@@ -15,7 +15,7 @@ def main():
         # Pastikan nama folder 'AI Recipes Recommendation' sudah benar.
         results = model.train(
             data='AI Recipes Recommendation/data.yaml', # <-- Ganti dengan nama folder dataset baru Anda
-            epochs=25, 
+            epochs=5, 
             imgsz=640,
             # PERUBAHAN KUNCI: Memberi nama baru agar tidak menimpa hasil training sebelumnya.
             name='new_recipe_model_run' 
